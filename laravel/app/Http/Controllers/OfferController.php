@@ -11,9 +11,6 @@ use Illuminate\Support\Facades\Auth;
 
 class OfferController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
     {
         $offers = Offer::all();
@@ -30,19 +27,21 @@ class OfferController extends Controller
             'offers' => $offers 
         ], 200);
     }
-    
-
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
+    public function getMyOffers()
     {
-        //
+        $offers = Offer::where('user_id', Auth::id())->get();
+        if ($offers->isEmpty()) {
+            return response()->json([
+                'message' => 'Aucune offre disponible actuellement.' 
+            ], 404); 
+        }
+    
+      
+        return response()->json([
+            'offers' => $offers 
+        ], 200);
     }
-
-    /**
-     * Store a newly created resource in storage.
-     */
+    
     public function store(StoreOfferRequest $request)
     {
        
@@ -63,45 +62,60 @@ class OfferController extends Controller
             return response()->json([
                 'message' => 'L\'offre a été créée avec succès.',
                 'offer' => $offer
-            ], Response::HTTP_CREATED); 
+            ], 201); 
 
         } catch (\Exception $e) {
             return response()->json([
                 'message' => 'Une erreur est survenue lors de la création de l\'offre.',
                 'error' => $e->getMessage()
-            ], Response::HTTP_INTERNAL_SERVER_ERROR); 
+            ], 500); 
         }
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(Offer $offer)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Offer $offer)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
     public function update(UpdateOfferRequest $request, Offer $offer)
     {
-        //
-    }
+        if ($offer->user_id !== Auth::id()) {
+            return response()->json([
+                'message' => 'Vous n\'êtes pas autorisé à modifier cette offre.'
+            ], 403);
+        }
 
-    /**
-     * Remove the specified resource from storage.
-     */
+        try {
+            $offer->update($request->validated());
+
+            return response()->json([
+                'message' => 'L\'offre a été mise à jour avec succès.',
+                'offer' => $offer
+            ], 201);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Une erreur est survenue lors de la mise à jour de l\'offre.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
     public function destroy(Offer $offer)
     {
-        //
+
+        if ($offer->user_id !== Auth::id()) {
+            return response()->json([
+                'message' => 'Vous n\'êtes pas autorisé à supprimer cette offre.'
+            ], 401);
+        }
+
+        try {
+            $offer->delete();
+
+            return response()->json([
+                'message' => 'L\'offre a été supprimée avec succès.'
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Une erreur est survenue lors de la suppression de l\'offre.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 }

@@ -85,6 +85,9 @@ class AuthController extends Controller
 
     public function updateUser(UpdateUserRequest $request){
         $user = Auth::user();
+        /**
+ * @method static bool update(array $attributes = [], array $options = [])
+ */
         $user->update([
             'name' => $request->get('name'),
             'email' => $request->get('email'),

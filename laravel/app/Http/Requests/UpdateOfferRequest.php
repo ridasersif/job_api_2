@@ -11,7 +11,7 @@ class UpdateOfferRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return false;
+        return true;
     }
 
     /**
@@ -22,7 +22,23 @@ class UpdateOfferRequest extends FormRequest
     public function rules(): array
     {
         return [
-            //
+           
+            'title' => 'required|string|max:255', 
+            'description' => 'required|string',  
+            'contract_type' => 'required|string', 
+            'location' => 'required|string',
+            'salary' => 'required|numeric',       
+        ];
+    }
+    public function messages()
+    {
+        return [
+          
+            'title.required' => 'Le titre est requis.',
+            'description.required' => 'La description est requise.',
+            'contract_type.required' => 'Le type de contrat est requis.',
+            'location.required' => 'Le lieu est requis.',
+            'salary.required' => 'Le salaire est requis.',
         ];
     }
 }
