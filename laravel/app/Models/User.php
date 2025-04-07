@@ -79,7 +79,10 @@ class User extends Authenticatable implements JWTSubject
         ->withPivot('cv')
         ->withTimestamps();
     }
-   
+    public function profile()
+    {
+        return $this->hasOne(Profile::class); 
+    }
 }
 
 

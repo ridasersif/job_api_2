@@ -27,7 +27,7 @@ class CandidateController extends Controller
     ]);
     $cvPath = $request->file('cv')->store('cv_uploads', 'public'); 
     $user->application()->attach($offer->id, [
-        'cv' => $request->cvPath  
+        'cv' => $cvPath  
     ]);
 
     return response()->json([

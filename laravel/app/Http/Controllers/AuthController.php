@@ -7,6 +7,10 @@ use App\Http\Middleware\JwtMiddleware;
 use App\Http\Requests\LoginRequest;
 use App\Http\Requests\RegisterRequest;
 use App\Http\Requests\UpdateUserRequest;
+use App\Http\Resources\UserCollection;
+use App\Http\Resources\UserResource;
+use App\Http\Resources\UsersResource;
+use App\Models\Profile;
 use App\Models\User;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Http\Request;
@@ -68,35 +72,64 @@ class AuthController extends Controller
             'expires_in' => JWTAuth::factory()->getTTL() * 60  
         ]);
     }
-    
-   
     public function getUser()
     {
-        try {
-            if (! $user = JWTAuth::parseToken()->authenticate()) {
-                return response()->json(['error' => 'User not found'], 404);
-            }
-        } catch (JWTException $e) {
-            return response()->json(['error' => 'Invalid token'], 400);
-        }
+        // try {
+       
+        // $user=User::with('profile')->findOrFail(Auth::user()->id);
+        // return new UserResource($user);
+        //     if (! $user = JWTAuth::parseToken()->authenticate()) {
+        //         return response()->json(['error' => 'User not found'], 404);
+        //     }
+        // } catch (JWTException $e) {
+        //     return response()->json(['error' => 'Invalid token'], 400);
+        // }
+       
+    //    $user=User::with('profile')->findOrFail(Auth::user()->id);
+    //     return new UserResource($user);
 
-        return response()->json(compact('user'));
+
+
+       $user=User::with('role')->get();
+        // return  UserResource::Collection($user);
+        return  new UserCollection($user);
+        
     }
 
     public function updateUser(UpdateUserRequest $request){
+        if ($request->id !== Auth::id()) {
+            return response()->json([
+                'message' => 'Vous n\'êtes pas autorisé à modifier cette profil.'
+            ], 403);
+        }
+    
         $user = Auth::user();
-        /**
- * @method static bool update(array $attributes = [], array $options = [])
- */
         $user->update([
             'name' => $request->get('name'),
             'email' => $request->get('email'),
             'password' => Hash::make($request->get('password')),
-            'role_id' =>$request->role_id
+            'role_id' => $request->role_id
         ]);
-
-
-        return response()->json(['message' => 'profile updated Successfully'], 201);
+    
+        $profile = $user->profile;
+    
+       
+        $profile->update([
+            'bio' => $request->get('bio'),
+            'phone' => $request->get('phone'),
+            'address' => $request->get('address'),
+        ]);
+    
+       
+        $profile->skills()->sync($request->skills);
+    
+      
+        $userData = $user->load(['profile.skills:id,name']); 
+    
+        return response()->json([
+            'message' => 'Profile updated successfully',
+            'user' => $userData
+        ], 200);
     }
 
     // User logout

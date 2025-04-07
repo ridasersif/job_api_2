@@ -8,10 +8,12 @@ use App\Http\Requests\StoreOfferRequest;
 use App\Http\Requests\UpdateOfferRequest;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 class OfferController extends Controller
 {
-    public function index()
+    use AuthorizesRequests;
+    public function getAllOffers()
     {
         $offers = Offer::all();
         
@@ -27,7 +29,7 @@ class OfferController extends Controller
             'offers' => $offers 
         ], 200);
     }
-    public function getMyOffers()
+    public function index()
     {
         $offers = Offer::where('user_id', Auth::id())->get();
         if ($offers->isEmpty()) {
@@ -79,8 +81,11 @@ class OfferController extends Controller
                 'message' => 'Vous n\'êtes pas autorisé à modifier cette offre.'
             ], 403);
         }
-
+      
+        
         try {
+            $this->authorize('update', $offer);
+
             $offer->update($request->validated());
 
             return response()->json([
@@ -101,10 +106,13 @@ class OfferController extends Controller
         if ($offer->user_id !== Auth::id()) {
             return response()->json([
                 'message' => 'Vous n\'êtes pas autorisé à supprimer cette offre.'
-            ], 401);
+            ], 403);
         }
 
         try {
+            //policies
+            $this->authorize('delete', $offer);
+
             $offer->delete();
 
             return response()->json([
